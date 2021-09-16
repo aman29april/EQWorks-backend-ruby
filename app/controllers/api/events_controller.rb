@@ -1,7 +1,7 @@
 class Api::EventsController < ApplicationController
   # returns counters
   def index
-    data = params[:redis] ? RedisCounterStore.events : LocalCounterStore.events
+    data = params[:store] ? RedisCounterStore.events : LocalCounterStore.events
     json_response({ events: data })
   end
 
@@ -13,14 +13,19 @@ class Api::EventsController < ApplicationController
                                       cooldown: "#{RateLimiter.cooldown} seconds" }
                            }, :unprocessable_entity)
     end
-    Event.log(event_params)
 
-    json_response({ message: 'Event log successfully' }, :created)
+    begin
+      Event.log(event_params)
+
+      json_response({ message: 'Event log successfully' }, :created)
+    rescue StandardError
+      json_response({ message: 'Event log successfully' }, :unprocessable_entity)
+    end
   end
 
   private
 
   def event_params
-    params.require(:event).permit(:key, :type)
+    params.require(:event).permit(:name, :type)
   end
 end

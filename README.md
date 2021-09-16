@@ -32,27 +32,78 @@ Run `rails spec` command from project folder.
 
 ### API End Points
 **`POST` `/api/events`**
+Params:
+event[name]=EVENT_NAME
+event[type]=EVENT_TYPE
 
+example value for name: Music
+Supported values for type: clicks, views
+
+CURL Sample:
 ```
-curl -X POST "https://{HOST}/api/events" -H  "Content-Type: multipart/form-data" -F "file_report[file]=@{PATH_TO_CSV};type=text/csv"
-```
----
-**`GET` `/api/payroll_reports`**
-
-```
-curl -X GET "http://{HOST}/api/payroll_reports"
+curl -L -X POST 'http://localhost:3000/api/events' -F 'event[name]=music' -F 'event[type]=clicks'
 ```
 
-### Design
-* This application API only application built using Ruby on Rails.
-* For persistence, **Postgres** is being used. We have structured data and later on, we may want to perform complex queries to generate timesheet and other reports. So I choose SQL based database.
+**`GET` `/api/events`** To view events that are logged.
+This API takes optional parameter store. If store is present, API will return events from Store else memory.
+`/api/events?store=true`
 
-`LocalCounterStore` class is used to store counters in memory. Hash Data structure is used. Event name with time will be the key and value will be hash of views and clicks.
-RateLimiter is used for rate limiting. I am using redis to store the counters. MAX_REQUESTS_LIMIT and MAX_REQUEST_DURATION ENV variables are used to configure rate limiting with default values 10 and 1 respectively.
-MAX_REQUESTS_LIMIT is the number of requests that can be made in last MAX_REQUEST_DURATION minutes. So by default 10 requests can be made in a minute.
+## Design
 
-To upload counters, First i thought to use `ConJob`, but it has limitation of a minute. So another solution was to create a infinite task with a loop and sleep of 5 seconds. 
-But I choose to create rake task `lib/tasks/upload_routine.rake`. Inside rake task i have used `TimerTask`, which will run the code in threads. `TimerTask` thread can respond to the success or failure of the task, performing logging operations and 
+### 1. Data structure
+
+- `LocalCounterStore` class is used to store counters in memory.
+- Hash Data structure is used. 
+  - Event name is the key and has a nested hash as value. Time will be the key and value will be hash of views and clicks.
+  - Events with same time (date, hours, minutes) will be under same time key. 
+  - Below is sample hash.
+```json 
+{
+    "events": {
+        "music": {
+            "2021-09-16 20:21": {
+                "views": 0,
+                "clicks": 2,
+                "time": "2021-09-16 20:21",
+                "key": "music:2021-09-16 20:21",
+                "name": "music"
+            }
+        }
+    }
+}
+```
+
+###2. Mock store
+- I am using `Redis` to store values of the counters. For this redis hash is being used. Key of the hash is event name with time, example: `"music:2021-09-16 20:20"` and value will be hash of views and clicks `"{"clicks":10,"views":0}"`
+- `app/services/redis_counter_store.rb` Module is being used for store.
+- Below is sample output when we get all values from Redis Store and return in GET API
+```json
+"events": {
+"music:2021-09-16 20:20": "{\"clicks\":10,\"views\":0}",
+"music:2021-09-16 20:21": "{\"clicks\":3,\"views\":0}"
+}
+```
+
+
+###3. Goroutine
+- To upload counters, First i thought to use `ConJob`, but it has limitation of a minute.
+- So another solution was to create a infinite task with a loop and sleep of 5 seconds.
+- **Current Approach**: I am using `TimerTask`, which will run the code in threads. `TimerTask` thread can respond to the success or failure of the task, performing logging operations and
 can also be configured with a timeout value allowing it to kill a task that runs too long.
+  - In initializers `config/initializers/routine.rb` there is code to run Task after every 5 seconds and for now timeout is also 5 seconds.
 
 
+###4. Global rate-limiting
+- `RateLimiter` class `app/services/rate_limiter.rb` is used for rate limiting. I am using `redis` to store the counters. 
+- `MAX_REQUESTS_LIMIT` and `MAX_REQUEST_DURATION` ENV variables are used to configure rate limiting with default values `10` and `1` respectively.
+- `MAX_REQUESTS_LIMIT` is the number of requests that can be made in last `MAX_REQUEST_DURATION` minutes. So by default `10 requests can be made in a minute`.
+
+
+###Assumptions
+- Time of each event will be set as `server current time`. For some events client may want to set the time, but for now current server time is assumed.
+- Two `events with same name and same time` (ignoring seconds) are `merged`. Say there is a click event and we already have similar click event with same time, so clicks of existing event will be incremented.
+- Only `views` and `clicks` events are possible right now.
+- On each event, count is incremented by 1
+
+###Improvements
+- Right now i am using hash to store data, which is not thread safe. Instead we need to use some `thread safe` data structure like `https://github.com/hamstergem/hamster`

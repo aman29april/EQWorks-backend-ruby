@@ -31,3 +31,10 @@
 
 en:
   hello: "Hello world"
+
+
+  activemodel:
+    errors:
+      messages:
+        record_invalid:
+          "Record Invalid"
