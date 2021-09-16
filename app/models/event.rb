@@ -6,6 +6,8 @@ class Event
   validates :name, :time, presence: true
   validates :clicks, :views, presence: true, numericality: { only_integer: true }
 
+  validate :click_or_view_present
+
   def initialize(opts = {})
     @clicks = opts[:clicks] || 0
     @views = opts[:views] || 0
@@ -29,8 +31,14 @@ class Event
 
     event.views += 1 if attrs['type'] == 'views'
 
-    raise ActiveRecord::RecordInvalid, event unless event.valid?
+    raise Exception, event.errors.full_messages.first unless event.valid?
 
     LocalCounterStore.add(event.name, time, event.to_json)
+  end
+
+  private
+
+  def click_or_view_present
+    errors.add(:views, 'or Clicks should be present') if views.zero? && clicks.zero?
   end
 end

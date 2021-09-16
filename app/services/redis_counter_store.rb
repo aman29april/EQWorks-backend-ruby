@@ -1,5 +1,5 @@
 module RedisCounterStore
-  REDIS_HASH_KEY = 'counterk'
+  REDIS_HASH_KEY = "#{ENV['RAILS_ENV']}_counterk"
 
   def self.add(key, hash)
     saved_value = $redis.hget(REDIS_HASH_KEY, key)
@@ -15,6 +15,10 @@ module RedisCounterStore
 
   def self.events
     $redis.hgetall(REDIS_HASH_KEY)
+  end
+
+  def self.query(key)
+    $redis.hget(REDIS_HASH_KEY, key)
   end
 
   def self.delete_all

@@ -1,7 +1,7 @@
 require 'singleton'
 
 class RateLimiter
-  RATE_LIMIT_KEY = 'rateLimit'
+  RATE_LIMIT_KEY = "#{ENV['RAILS_ENV']}_rateLimit"
 
   class << self
     def increment
@@ -26,6 +26,10 @@ class RateLimiter
 
     def cooldown
       first_request_time + time_limit.minutes - Time.now
+    end
+
+    def reset
+      $redis.del RATE_LIMIT_KEY
     end
 
     private

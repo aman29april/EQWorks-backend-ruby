@@ -18,8 +18,8 @@ class Api::EventsController < ApplicationController
       Event.log(event_params)
 
       json_response({ message: 'Event log successfully' }, :created)
-    rescue StandardError
-      json_response({ message: 'Event log successfully' }, :unprocessable_entity)
+    rescue Exception => e
+      json_response({ error: e.message }, :unprocessable_entity)
     end
   end
 

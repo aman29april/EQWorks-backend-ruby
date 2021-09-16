@@ -1,5 +1,6 @@
 class LocalCounterStore
-  @@lock = Mutex.new
+  # Hash are not thread safe so not using mutex as they may not work.
+  # @@lock = Mutex.new
 
   class << self
     def add(key, time, value)

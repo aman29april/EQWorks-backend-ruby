@@ -1,4 +1,6 @@
-@timer = Concurrent::TimerTask.new(execution_interval: 5, timeout_interval: 5) do
+@timer = Concurrent::TimerTask.new(execution_interval: ENV['ROUTINE_INTERVAL'] || 5,
+                                   timeout_interval: ENV['ROUTINE_TIMEOUT'] || 5) do
   CountersService.sync
 end
+
 @timer.execute

@@ -6,9 +6,7 @@ This is API only Ruby on Rails based application solution to EQWork's [ws-produc
 This is a MVP product with minimum functionalities.
 
 ### Live Demo
-Live demo can be found at https://stark-fjord-10885.herokuapp.com/
-
-https://stark-fjord-10885.herokuapp.com/api/events
+Live demo can be found at https://stark-fjord-10885.herokuapp.com/api/events
 
 
 ### Tech Stack
@@ -24,7 +22,6 @@ Navigate to project directory and follow following commands
 
 `rails server` Rails Server will start and you can visit `localhost:3000` in your web browser.
 
-Run Task: `bundle exec rake upload_routine:sync_at_5_sec`
 ### Running Tests
 Run `rails spec` command from project folder.
 
@@ -79,8 +76,8 @@ This API takes optional parameter store. If store is present, API will return ev
 - Below is sample output when we get all values from Redis Store and return in GET API
 ```json
 "events": {
-"music:2021-09-16 20:20": "{\"clicks\":10,\"views\":0}",
-"music:2021-09-16 20:21": "{\"clicks\":3,\"views\":0}"
+  "music:2021-09-16 20:20": "{\"clicks\":10,\"views\":0}",
+  "music:2021-09-16 20:21": "{\"clicks\":3,\"views\":0}"
 }
 ```
 
@@ -107,3 +104,5 @@ can also be configured with a timeout value allowing it to kill a task that runs
 
 ###Improvements
 - Right now i am using hash to store data, which is not thread safe. Instead we need to use some `thread safe` data structure like `https://github.com/hamstergem/hamster`
+- Test Suit is also using same local store variable.
+- Routine task starts automatically after initialization and there is no way to stop it. So there should be a mechanism to control execution of the routine
