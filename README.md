@@ -5,7 +5,7 @@ http://localhost:3000/api/events
 
 ## EQWorks - Backend Track Ruby on Rails
 
-This is API only Ruby on Rails based application solution to EQWork's [ws-product](https://gist.github.com/woozyking/126fdf4c72fdf65a3504e5681a1ce715l) challenge.
+This is API only Ruby on Rails based application solution to EQWork's [ws-product](https://gist.github.com/woozyking/126fdf4c72fdf65a3504e5681a1ce715) challenge.
 This is a MVP product with minimum functionalities.
 
 ### Live Demo
@@ -28,9 +28,6 @@ Navigate to project directory and follow following commands
 Run `rails spec` command from project folder.
 
 ### Assumptions
-* Upload CSV file will be in `correct format` and there is no validation on csv rows.
-* If csv contains zero records, I am still saving reference of the `report id` in the system, so another csv with same report id can't be uploaded.
-* Once CSV is uploaded, `wages` will be calculated based on current `group rates`. If in future group rates change, old entries will have wages as per previous rates.
 
 ### API End Points
 **`POST` `/api/events`**
@@ -53,6 +50,8 @@ curl -X GET "http://{HOST}/api/payroll_reports"
 RateLimiter is used for rate limiting. I am using redis to store the counters. MAX_REQUESTS_LIMIT and MAX_REQUEST_DURATION ENV variables are used to configure rate limiting with default values 10 and 1 respectively.
 MAX_REQUESTS_LIMIT is the number of requests that can be made in last MAX_REQUEST_DURATION minutes. So by default 10 requests can be made in a minute.
 
-To upload counters, I have a cron job that runs after 5 minutes. It will dump values of inMemory counter to redis.
+To upload counters, First i thought to use `ConJob`, but it has limitation of a minute. So another solution was to create a infinite task with a loop and sleep of 5 seconds. 
+But I choose to create rake task `lib/tasks/upload_routine.rake`. Inside rake task i have used `TimerTask`, which will run the code in threads. `TimerTask` thread can respond to the success or failure of the task, performing logging operations and 
+can also be configured with a timeout value allowing it to kill a task that runs too long.
 
 

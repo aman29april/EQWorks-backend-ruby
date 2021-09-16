@@ -1,3 +1,3 @@
-every 5.seconds do
+every 5.second do
   runner 'CountersService.sync'
 end
