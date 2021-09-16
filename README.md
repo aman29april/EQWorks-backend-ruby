@@ -1,15 +1,15 @@
 # README
 
-http://localhost:3000/api/events
-
-
 ## EQWorks - Backend Track Ruby on Rails
 
 This is API only Ruby on Rails based application solution to EQWork's [ws-product](https://gist.github.com/woozyking/126fdf4c72fdf65a3504e5681a1ce715) challenge.
 This is a MVP product with minimum functionalities.
 
 ### Live Demo
-Live demo can be found at https://sa-payroll.herokuapp.com
+Live demo can be found at https://stark-fjord-10885.herokuapp.com/
+
+https://stark-fjord-10885.herokuapp.com/api/events
+
 
 ### Tech Stack
 * Ruby (3.0.2)
@@ -24,6 +24,7 @@ Navigate to project directory and follow following commands
 
 `rails server` Rails Server will start and you can visit `localhost:3000` in your web browser.
 
+Run Task: `bundle exec rake upload_routine:sync_at_5_sec`
 ### Running Tests
 Run `rails spec` command from project folder.
 
